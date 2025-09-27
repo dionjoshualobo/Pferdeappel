@@ -24,10 +24,6 @@ class _HomeScreenState extends State<HomeScreen> {
   late Color _player2Color;
   late int _gridSize;
   late TextEditingController _gridController;
-  late bool _isPlayer1Computer;
-  late bool _isPlayer2Computer;
-  late Difficulty _player1Difficulty;
-  late Difficulty _player2Difficulty;
 
   @override
   void initState() {
@@ -38,10 +34,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _player2Color = settings?.player2Color ?? GameSettings.availableColors[3];
     _gridSize = settings?.gridSize ?? 8;
     _gridController = TextEditingController(text: _gridSize.toString());
-    _isPlayer1Computer = settings?.isPlayer1Computer ?? false;
-    _isPlayer2Computer = settings?.isPlayer2Computer ?? false;
-    _player1Difficulty = settings?.player1Difficulty ?? Difficulty.easy;
-    _player2Difficulty = settings?.player2Difficulty ?? Difficulty.easy;
   }
 
   @override
@@ -76,35 +68,8 @@ class _HomeScreenState extends State<HomeScreen> {
       gridSize: _gridSize.clamp(4, 12), // Min 4x4, Max 12x12
       player1Color: _player1Color,
       player2Color: _player2Color,
-      isPlayer1Computer: _isPlayer1Computer,
-      isPlayer2Computer: _isPlayer2Computer,
-      player1Difficulty: _player1Difficulty,
-      player2Difficulty: _player2Difficulty,
     );
     widget.onStartGame(settings);
-  }
-
-  /// Get available difficulty levels based on grid size
-  /// Impossible mode is disabled for 4x4 boards (mathematically unsolvable)
-  List<Difficulty> _getAvailableDifficulties() {
-    if (_gridSize == 4) {
-      // On 4x4, Impossible is disabled - P2 has forced win, P1 cannot avoid loss
-      return Difficulty.values.where((d) => d != Difficulty.impossible).toList();
-    }
-    return Difficulty.values.toList();
-  }
-
-  /// Ensure difficulty is valid for current grid size
-  void _validateDifficulties() {
-    if (_gridSize == 4) {
-      // Downgrade Impossible to Hard on 4x4
-      if (_player1Difficulty == Difficulty.impossible) {
-        _player1Difficulty = Difficulty.hard;
-      }
-      if (_player2Difficulty == Difficulty.impossible) {
-        _player2Difficulty = Difficulty.hard;
-      }
-    }
   }
 
   @override
@@ -214,10 +179,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildKnightSelector(Player player, Color color) {
-    final isPlayer1 = player == Player.player1;
-    final isComputer = isPlayer1 ? _isPlayer1Computer : _isPlayer2Computer;
-    final difficulty = isPlayer1 ? _player1Difficulty : _player2Difficulty;
-
     return Column(
       children: [
         // Knight icon (tap to change color)
@@ -274,9 +235,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        // Player label (Computer or Player 1/2)
+        // Player label
         Text(
-          isComputer ? 'Computer' : player.displayName,
+          player.displayName,
           style: TextStyle(
             fontSize: 12,
             color: color,
@@ -290,97 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Colors.white.withValues(alpha: 0.5),
           ),
         ),
-        const SizedBox(height: 12),
-        // Computer toggle
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Computer',
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.white.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(width: 6),
-            SizedBox(
-              height: 24,
-              child: Switch(
-                value: isComputer,
-                onChanged: (value) {
-                  setState(() {
-                    if (isPlayer1) {
-                      _isPlayer1Computer = value;
-                      // Prevent both being computer
-                      if (value && _isPlayer2Computer) {
-                        _isPlayer2Computer = false;
-                      }
-                    } else {
-                      _isPlayer2Computer = value;
-                      // Prevent both being computer
-                      if (value && _isPlayer1Computer) {
-                        _isPlayer1Computer = false;
-                      }
-                    }
-                  });
-                },
-                activeColor: color,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ),
-          ],
-        ),
-        // Difficulty dropdown - ALWAYS reserve space to prevent layout shift
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 32, // Fixed height for dropdown area
-          child: isComputer
-            ? Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: color.withValues(alpha: 0.5),
-                  ),
-                ),
-                child: DropdownButton<Difficulty>(
-                  value: difficulty,
-                  items: _getAvailableDifficulties().map((d) {
-                    return DropdownMenuItem(
-                      value: d,
-                      child: Text(
-                        d.displayName,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withValues(alpha: 0.9),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        if (isPlayer1) {
-                          _player1Difficulty = value;
-                        } else {
-                          _player2Difficulty = value;
-                        }
-                      });
-                    }
-                  },
-                  dropdownColor: const Color(0xFF2a2a3e),
-                  underline: const SizedBox(),
-                  isDense: true,
-                  icon: Icon(
-                    Icons.arrow_drop_down,
-                    color: color,
-                    size: 18,
-                  ),
-                ),
-              )
-            : const SizedBox(), // Empty placeholder when not computer
-        ),
+        const SizedBox(height: 20),
       ],
     );
   }
