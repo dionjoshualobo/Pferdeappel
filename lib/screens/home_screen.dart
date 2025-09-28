@@ -367,7 +367,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (parsed != null) {
                         setState(() {
                           _gridSize = parsed.clamp(4, 12);
-                          _validateDifficulties(); // Auto-downgrade Impossible on 4x4
                         });
                       }
                     },
