@@ -136,7 +136,7 @@ class GameHud extends ConsumerWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            "${currentPlayer.getDisplayName(settings)}'s Turn",
+            "${currentPlayer.displayName}'s Turn",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
