@@ -1,0 +1,137 @@
+import 'position.dart';
+import 'tile_state.dart';
+import 'player.dart';
+import 'game_settings.dart';
+
+/// Represents the result of the game
+enum GameResult {
+  ongoing,
+  player1Wins,
+  player2Wins,
+}
+
+/// Complete game state
+class GameState {
+  /// NxN grid of tile states
+  final List<List<TileState>> board;
+  
+  /// Grid size (NxN)
+  final int gridSize;
+  
+  /// Current positions of both players
+  final Position player1Position;
+  final Position player2Position;
+  
+  /// Whose turn is it
+  final Player currentPlayer;
+  
+  /// Game result
+  final GameResult result;
+  
+  /// Position of tile currently being animated (falling)
+  final Position? fallingTilePosition;
+  
+  /// Game settings (colors, etc.)
+  final GameSettings settings;
+  
+  /// Move counter (total moves made in the game)
+  final int moveCount;
+
+  const GameState({
+    required this.board,
+    required this.gridSize,
+    required this.player1Position,
+    required this.player2Position,
+    required this.currentPlayer,
+    required this.settings,
+    this.result = GameResult.ongoing,
+    this.fallingTilePosition,
+    this.moveCount = 0,
+  });
+
+  /// Create initial game state with given settings
+  factory GameState.initial(GameSettings settings) {
+    final size = settings.gridSize;
+    
+    // Initialize NxN board with all active tiles
+    final board = List.generate(
+      size,
+      (_) => List.generate(size, (_) => const TileState()),
+    );
+
+    return GameState(
+      board: board,
+      gridSize: size,
+      player1Position: const Position(0, 0), // Top-left
+      player2Position: Position(size - 1, size - 1), // Bottom-right
+      currentPlayer: Player.player1,
+      settings: settings,
+      moveCount: 0,
+    );
+  }
+
+  /// Check if this is player 2's first move (capture not allowed)
+  bool get isPlayer2FirstMove => 
+      currentPlayer == Player.player2 && moveCount == 1;
+
+  /// Get position of a specific player
+  Position getPlayerPosition(Player player) {
+    return player == Player.player1 ? player1Position : player2Position;
+  }
+
+  /// Get all valid moves for the current player
+  List<Position> getValidMoves() {
+    final currentPos = getPlayerPosition(currentPlayer);
+    final opponentPos = getPlayerPosition(currentPlayer.opponent);
+    final potentialMoves = currentPos.getKnightMoves(gridSize);
+    
+    return potentialMoves.where((pos) {
+      // Must be on board
+      if (!pos.isOnBoard(gridSize)) return false;
+      // Must be a playable tile (not void or falling)
+      if (!board[pos.row][pos.col].isPlayable) return false;
+      // On player 2's first move, cannot capture (fair play rule)
+      if (isPlayer2FirstMove && pos == opponentPos) return false;
+      return true;
+    }).toList();
+  }
+
+  /// Check if a position is a valid move for current player
+  bool isValidMove(Position target) {
+    return getValidMoves().contains(target);
+  }
+
+  /// Get tile state at position
+  TileState getTileAt(Position pos) => board[pos.row][pos.col];
+
+  /// Create a copy with modified fields
+  GameState copyWith({
+    List<List<TileState>>? board,
+    int? gridSize,
+    Position? player1Position,
+    Position? player2Position,
+    Player? currentPlayer,
+    GameResult? result,
+    Position? fallingTilePosition,
+    GameSettings? settings,
+    int? moveCount,
+    bool clearFallingTile = false,
+  }) {
+    return GameState(
+      board: board ?? this.board,
+      gridSize: gridSize ?? this.gridSize,
+      player1Position: player1Position ?? this.player1Position,
+      player2Position: player2Position ?? this.player2Position,
+      currentPlayer: currentPlayer ?? this.currentPlayer,
+      result: result ?? this.result,
+      settings: settings ?? this.settings,
+      moveCount: moveCount ?? this.moveCount,
+      fallingTilePosition: clearFallingTile ? null : (fallingTilePosition ?? this.fallingTilePosition),
+    );
+  }
+
+  /// Deep copy the board
+  List<List<TileState>> copyBoard() {
+    return board.map((row) => row.toList()).toList();
+  }
+}
