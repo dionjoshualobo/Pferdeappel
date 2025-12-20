@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/models.dart';
 import '../widgets/abyss_background.dart';
+import 'how_to_play_screen.dart';
 
 /// Home screen with play button, knight color selectors, and grid size input
 class HomeScreen extends StatefulWidget {
@@ -119,6 +120,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     
                     // Grid size selector
                     _buildGridSizeSelector(),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // How to Play button
+                    _buildHowToPlayButton(),
                   ],
                 ),
               ),
@@ -412,6 +418,48 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHowToPlayButton() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HowToPlayScreen(),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.15),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.help_outline,
+              color: Colors.white.withValues(alpha: 0.7),
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'How to Play?',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white.withValues(alpha: 0.7),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

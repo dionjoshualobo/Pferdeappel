@@ -12,8 +12,6 @@ class GameHud extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gameState = ref.watch(gameStateProvider);
-    final isGameOver = ref.watch(isGameOverProvider);
-    final winner = ref.watch(winnerProvider);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -92,11 +90,8 @@ class GameHud extends ConsumerWidget {
           
           const SizedBox(height: 16),
           
-          // Turn indicator or winner display
-          if (isGameOver && winner != null)
-            _buildWinnerDisplay(winner, gameState.settings, ref)
-          else
-            _buildTurnIndicator(gameState.currentPlayer, gameState.settings),
+          // Always show turn indicator (win overlay handled in game_screen)
+          _buildTurnIndicator(gameState.currentPlayer, gameState.settings),
         ],
       ),
     );
@@ -156,95 +151,6 @@ class GameHud extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildWinnerDisplay(Player winner, GameSettings settings, WidgetRef ref) {
-    final color = winner.getColor(settings);
-    final accentColor = winner.getAccentColor(settings);
-    
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                color.withValues(alpha: 0.3),
-                accentColor.withValues(alpha: 0.2),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: color,
-              width: 3,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: color.withValues(alpha: 0.5),
-                blurRadius: 24,
-                spreadRadius: 4,
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.emoji_events,
-                size: 48,
-                color: color,
-                shadows: [
-                  Shadow(
-                    color: color.withValues(alpha: 0.8),
-                    blurRadius: 16,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${winner.displayName} Wins!',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      blurRadius: 4,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        ElevatedButton.icon(
-          onPressed: () => ref.read(gameStateProvider.notifier).resetGame(),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2a2a3c),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-              side: BorderSide(
-                color: Colors.white.withValues(alpha: 0.2),
-              ),
-            ),
-            elevation: 8,
-            shadowColor: Colors.black.withValues(alpha: 0.5),
-          ),
-          icon: const Icon(Icons.replay),
-          label: const Text(
-            'Play Again',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

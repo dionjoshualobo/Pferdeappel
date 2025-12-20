@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/models.dart';
 import '../providers/game_provider.dart';
 import '../widgets/widgets.dart';
 
@@ -14,6 +15,8 @@ class GameScreen extends ConsumerWidget {
     final gameState = ref.watch(gameStateProvider);
     final isPlayer2FirstMove = gameState.isPlayer2FirstMove;
     final isSmallBoard = gameState.gridSize == 4; // Show message only on 4x4 boards
+    final isGameOver = ref.watch(isGameOverProvider);
+    final winner = ref.watch(winnerProvider);
     
     return Scaffold(
       backgroundColor: Colors.black,
@@ -85,6 +88,10 @@ class GameScreen extends ConsumerWidget {
             // First move protection message overlay (only on small boards)
             if (isPlayer2FirstMove && isSmallBoard)
               const _FirstMoveOverlay(),
+            
+            // Win overlay
+            if (isGameOver && winner != null)
+              _WinOverlay(winner: winner, settings: gameState.settings),
           ],
         ),
       ),
@@ -186,6 +193,139 @@ class _FirstMoveOverlayState extends State<_FirstMoveOverlay>
                   ),
                 ],
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Overlay that shows winner and Play Again button
+class _WinOverlay extends ConsumerWidget {
+  final Player winner;
+  final GameSettings settings;
+
+  const _WinOverlay({required this.winner, required this.settings});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final color = winner.getColor(settings);
+
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.7),
+        child: Center(
+          child: Container(
+            margin: const EdgeInsets.all(32),
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1a1a2e),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: color.withValues(alpha: 0.6),
+                width: 3,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.4),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Trophy icon
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        color,
+                        color.withValues(alpha: 0.5),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.6),
+                        blurRadius: 20,
+                        spreadRadius: 3,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.emoji_events,
+                    size: 45,
+                    color: Colors.white,
+                  ),
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Winner text
+                Text(
+                  '${winner.displayName} Wins!',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                    shadows: [
+                      Shadow(
+                        color: color.withValues(alpha: 0.8),
+                        blurRadius: 20,
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Play Again button
+                GestureDetector(
+                  onTap: () => ref.read(gameStateProvider.notifier).resetGame(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          color,
+                          color.withValues(alpha: 0.7),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.5),
+                          blurRadius: 16,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.replay, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text(
+                          'Play Again',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
