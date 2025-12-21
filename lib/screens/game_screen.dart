@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/models.dart';
@@ -5,18 +6,77 @@ import '../providers/game_provider.dart';
 import '../widgets/widgets.dart';
 
 /// Main game screen with layered Stack architecture
-class GameScreen extends ConsumerWidget {
+class GameScreen extends ConsumerStatefulWidget {
   final VoidCallback? onHomePressed;
   
   const GameScreen({super.key, this.onHomePressed});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GameScreen> createState() => _GameScreenState();
+}
+
+class _GameScreenState extends ConsumerState<GameScreen> {
+  Timer? _computerMoveTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Schedule initial computer move check after 1 second
+    _computerMoveTimer = Timer(const Duration(seconds: 1), () {
+      _checkAndExecuteComputerMove();
+    });
+  }
+
+  @override
+  void dispose() {
+    _computerMoveTimer?.cancel();
+    super.dispose();
+  }
+
+  void _checkAndExecuteComputerMove() {
+    if (!mounted) return;
+    
+    final gameState = ref.read(gameStateProvider);
+    final isComputerTurn = ref.read(isComputerTurnProvider);
+    final isGameOver = gameState.result != GameResult.ongoing;
+    final isAnimating = gameState.fallingTilePosition != null;
+    
+    if (isComputerTurn && !isGameOver && !isAnimating) {
+      final move = ref.read(computerMoveProvider);
+      if (move != null) {
+        ref.read(gameStateProvider.notifier).makeMove(move);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final gameState = ref.watch(gameStateProvider);
     final isPlayer2FirstMove = gameState.isPlayer2FirstMove;
-    final isSmallBoard = gameState.gridSize == 4; // Show message only on 4x4 boards
+    final isSmallBoard = gameState.gridSize == 4;
     final isGameOver = ref.watch(isGameOverProvider);
     final winner = ref.watch(winnerProvider);
+    final isComputerTurn = ref.watch(isComputerTurnProvider);
+
+    // Listen for turn changes and execute computer moves
+    ref.listen<GameState>(gameStateProvider, (previous, next) {
+      if (previous == null) return;
+      
+      // Check if turn changed, animation completed, or game reset
+      final turnChanged = previous.currentPlayer != next.currentPlayer;
+      final animationCompleted = previous.fallingTilePosition != null && next.fallingTilePosition == null;
+      final gameReset = previous.moveCount > 0 && next.moveCount == 0;
+      
+      if ((turnChanged || animationCompleted || gameReset) && 
+          next.result == GameResult.ongoing &&
+          next.currentPlayer.isComputer(next.settings)) {
+        // Small delay to let animations complete
+        _computerMoveTimer?.cancel();
+        _computerMoveTimer = Timer(const Duration(milliseconds: 100), () {
+          _checkAndExecuteComputerMove();
+        });
+      }
+    });
     
     return Scaffold(
       backgroundColor: Colors.black,
@@ -52,7 +112,7 @@ class GameScreen extends ConsumerWidget {
             Column(
               children: [
                 // Top HUD with home and restart buttons
-                GameHud(onHomePressed: onHomePressed),
+                GameHud(onHomePressed: widget.onHomePressed),
 
                 // Game Board (takes remaining space)
                 const Expanded(
@@ -85,8 +145,8 @@ class GameScreen extends ConsumerWidget {
               ),
             ),
             
-            // First move protection message overlay (only on small boards)
-            if (isPlayer2FirstMove && isSmallBoard)
+            // First move protection message overlay (only on small boards, not for computer)
+            if (isPlayer2FirstMove && isSmallBoard && !isComputerTurn)
               const _FirstMoveOverlay(),
             
             // Win overlay
@@ -268,7 +328,7 @@ class _WinOverlay extends ConsumerWidget {
                 
                 // Winner text
                 Text(
-                  '${winner.displayName} Wins!',
+                  '${winner.getDisplayName(settings)} wins!',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,

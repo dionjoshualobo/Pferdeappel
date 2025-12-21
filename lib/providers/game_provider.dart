@@ -4,6 +4,7 @@ import '../models/position.dart';
 import '../models/tile_state.dart';
 import '../models/player.dart';
 import '../models/game_settings.dart';
+import '../ai/computer_ai.dart';
 
 /// Provider for the game state - this is the main provider
 final gameStateProvider = NotifierProvider<GameStateNotifier, GameState>(
@@ -154,4 +155,27 @@ final winnerProvider = Provider<Player?>((ref) {
 final isPlayer2FirstMoveProvider = Provider<bool>((ref) {
   final gameState = ref.watch(gameStateProvider);
   return gameState.isPlayer2FirstMove;
+});
+
+/// Provider to check if current player is a computer
+final isComputerTurnProvider = Provider<bool>((ref) {
+  final gameState = ref.watch(gameStateProvider);
+  return gameState.currentPlayer.isComputer(gameState.settings);
+});
+
+/// Provider to get the computer's chosen move (null if not computer's turn or no valid moves)
+final computerMoveProvider = Provider<Position?>((ref) {
+  final gameState = ref.watch(gameStateProvider);
+  final isComputerTurn = ref.watch(isComputerTurnProvider);
+  
+  if (!isComputerTurn || gameState.result != GameResult.ongoing) {
+    return null;
+  }
+  
+  final difficulty = gameState.currentPlayer == Player.player1
+      ? gameState.settings.player1Difficulty
+      : gameState.settings.player2Difficulty;
+  
+  final ai = ComputerAI();
+  return ai.getBestMove(gameState, difficulty);
 });
