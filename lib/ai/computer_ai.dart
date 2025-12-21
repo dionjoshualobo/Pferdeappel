@@ -1,14 +1,20 @@
 import 'dart:math';
 import '../models/models.dart';
 
-/// AI engine for computing computer opponent moves
+/// Enhanced AI engine with improved heuristics and deeper search
 class ComputerAI {
   final Random _random = Random();
+  
+  // Transposition table for caching evaluated positions
+  final Map<String, double> _transpositionTable = {};
 
   /// Get the best move for the current player based on difficulty
   Position? getBestMove(GameState state, Difficulty difficulty) {
     final validMoves = state.getValidMoves();
     if (validMoves.isEmpty) return null;
+
+    // Clear transposition table for each new decision
+    _transpositionTable.clear();
 
     switch (difficulty) {
       case Difficulty.easy:
@@ -22,12 +28,19 @@ class ComputerAI {
     }
   }
 
-  /// Easy: Pick a random valid move
+  /// Easy: Pick a random valid move (occasionally avoid obvious traps)
   Position _getEasyMove(List<Position> validMoves) {
-    return validMoves[_random.nextInt(validMoves.length)];
+    // 70% chance of pure random, 30% chance of avoiding worst move
+    if (_random.nextDouble() < 0.7 || validMoves.length == 1) {
+      return validMoves[_random.nextInt(validMoves.length)];
+    }
+    
+    // Avoid the first move in list (which might be predictable)
+    final shuffled = List<Position>.from(validMoves)..shuffle(_random);
+    return shuffled.first;
   }
 
-  /// Medium: Avoid captures, prefer high mobility, add randomness
+  /// Medium: Avoid captures, prefer high mobility, aggressive when possible
   Position _getMediumMove(GameState state, List<Position> validMoves) {
     final scores = <Position, double>{};
     final opponentPos = state.getPlayerPosition(state.currentPlayer.opponent);
@@ -35,114 +48,164 @@ class ComputerAI {
     for (final move in validMoves) {
       double score = 0;
 
-      // Simulate the move to check opponent's response
+      // Immediate win - always take it
+      if (move == opponentPos && _canCapture(state)) {
+        return move;
+      }
+
+      // Simulate the move
       final simState = _simulateMove(state, move);
+      
+      // Check if opponent is trapped (we win)
+      if (simState.getValidMoves().isEmpty) {
+        return move;
+      }
+
       final opponentMoves = simState.getValidMoves();
 
-      // Avoid moves where opponent can capture us next turn
-      final canBeCaptured = opponentMoves.contains(move);
-      if (canBeCaptured) {
-        score -= 50;
+      // Heavily penalize moves where opponent can capture us
+      if (opponentMoves.contains(move)) {
+        score -= 100;
       }
 
-      // Prefer moves with higher mobility (more escape routes)
-      final futureState = _simulateMove(state, move);
-      // Switch back to current player to count their moves from new position
-      final mobilityState = futureState.copyWith(
-        currentPlayer: state.currentPlayer,
-      );
-      final futureMoves = _countValidMovesFromPosition(mobilityState, move);
-      score += futureMoves * 5;
+      // Our mobility after this move
+      final ourFutureMobility = _countMobilityAfterMove(state, move);
+      score += ourFutureMobility * 8;
 
-      // Bonus for capturing opponent (if allowed)
-      if (move == opponentPos && !state.isPlayer2FirstMove) {
-        score += 100;
+      // Opponent's mobility after this move (lower is better for us)
+      score -= opponentMoves.length * 5;
+      
+      // Bonus for reducing opponent to few moves
+      if (opponentMoves.length <= 2) {
+        score += 30;
+      }
+      if (opponentMoves.length == 1) {
+        score += 50;
       }
 
-      // Add small randomness to avoid predictability
-      score += _random.nextDouble() * 3;
+      // Small randomness
+      score += _random.nextDouble() * 5;
 
       scores[move] = score;
     }
 
-    // Pick the move with highest score
     return _pickBestMove(scores);
   }
 
-  /// Hard: 2-ply lookahead, pick from top moves with randomness
+  /// Hard: 4-ply lookahead with improved evaluation
   Position _getHardMove(GameState state, List<Position> validMoves) {
     final scores = <Position, double>{};
     final opponentPos = state.getPlayerPosition(state.currentPlayer.opponent);
+    const depth = 4;
 
+    // Check for immediate wins first
     for (final move in validMoves) {
-      // Immediate win check
-      if (move == opponentPos && !state.isPlayer2FirstMove) {
-        scores[move] = 1000 + _random.nextDouble();
-        continue;
+      if (move == opponentPos && _canCapture(state)) {
+        return move;
       }
-
-      // Simulate our move
-      final afterOurMove = _simulateMove(state, move);
-      
-      // Check if opponent is trapped after our move
-      if (afterOurMove.getValidMoves().isEmpty) {
-        scores[move] = 900 + _random.nextDouble();
-        continue;
+      final simState = _simulateMove(state, move);
+      if (simState.result != GameResult.ongoing) {
+        return move;
       }
-
-      // Evaluate opponent's best response
-      double worstCaseScore = double.infinity;
-      for (final oppMove in afterOurMove.getValidMoves()) {
-        final afterOppMove = _simulateMove(afterOurMove, oppMove);
-        
-        // Our mobility after opponent moves
-        final ourMobility = afterOppMove.getValidMoves().length.toDouble();
-        
-        // Check if we get trapped
-        if (ourMobility == 0) {
-          worstCaseScore = -1000;
-          break;
-        }
-        
-        // Check if opponent can capture us
-        if (oppMove == move) {
-          worstCaseScore = min(worstCaseScore, -500);
-          continue;
-        }
-
-        final score = ourMobility * 10;
-        worstCaseScore = min(worstCaseScore, score);
-      }
-
-      scores[move] = worstCaseScore + _random.nextDouble() * 2;
     }
 
-    // Pick from top 3 moves randomly for unpredictability
-    return _pickFromTopMoves(scores, 3);
-  }
+    // Order moves by quick evaluation (improves pruning)
+    final orderedMoves = _orderMoves(state, validMoves);
 
-  /// Impossible: Minimax with alpha-beta pruning, 5-ply depth
-  Position _getImpossibleMove(GameState state, List<Position> validMoves) {
-    final scores = <Position, double>{};
-    const depth = 5;
-
-    for (final move in validMoves) {
+    for (final move in orderedMoves) {
       final newState = _simulateMove(state, move);
       final score = _minimax(
         newState,
         depth - 1,
         double.negativeInfinity,
         double.infinity,
-        false, // Now it's opponent's turn (minimizing)
+        false,
         state.currentPlayer,
       );
-      scores[move] = score + _random.nextDouble() * 0.1; // Tiny randomness for ties
+      scores[move] = score + _random.nextDouble() * 2; // Small randomness for variety
     }
 
     return _pickFromTopMoves(scores, 2);
   }
 
-  /// Minimax algorithm with alpha-beta pruning
+  /// Impossible: Deep Minimax with enhanced evaluation and iterative deepening
+  Position _getImpossibleMove(GameState state, List<Position> validMoves) {
+    final opponentPos = state.getPlayerPosition(state.currentPlayer.opponent);
+
+    // Check for immediate wins
+    for (final move in validMoves) {
+      if (move == opponentPos && _canCapture(state)) {
+        return move;
+      }
+      final simState = _simulateMove(state, move);
+      if (simState.result != GameResult.ongoing) {
+        return move;
+      }
+    }
+
+    // Adaptive depth based on number of valid moves and board size
+    // Fewer moves = can search deeper
+    final baseDepth = 7;
+    final moveCountFactor = validMoves.length <= 3 ? 2 : (validMoves.length <= 5 ? 1 : 0);
+    final depth = baseDepth + moveCountFactor;
+
+    final scores = <Position, double>{};
+    
+    // Order moves for better pruning
+    final orderedMoves = _orderMoves(state, validMoves);
+
+    for (final move in orderedMoves) {
+      final newState = _simulateMove(state, move);
+      final score = _minimax(
+        newState,
+        depth - 1,
+        double.negativeInfinity,
+        double.infinity,
+        false,
+        state.currentPlayer,
+      );
+      scores[move] = score;
+    }
+
+    // Pick the absolute best move (minimal randomness)
+    return _pickBestMove(scores);
+  }
+
+  /// Order moves by quick heuristic evaluation for better alpha-beta pruning
+  List<Position> _orderMoves(GameState state, List<Position> moves) {
+    final opponentPos = state.getPlayerPosition(state.currentPlayer.opponent);
+    
+    final scored = moves.map((move) {
+      double priority = 0;
+      
+      // Capturing moves first
+      if (move == opponentPos && _canCapture(state)) {
+        priority += 1000;
+      }
+      
+      // Moves that trap opponent
+      final simState = _simulateMove(state, move);
+      if (simState.result != GameResult.ongoing) {
+        priority += 900;
+      }
+      
+      // Moves that reduce opponent mobility
+      final oppMoves = simState.getValidMoves().length;
+      priority += (10 - oppMoves) * 10;
+      
+      // Avoid moves where we can be captured
+      if (simState.getValidMoves().contains(move)) {
+        priority -= 500;
+      }
+      
+      return MapEntry(move, priority);
+    }).toList();
+    
+    scored.sort((a, b) => b.value.compareTo(a.value));
+    return scored.map((e) => e.key).toList();
+  }
+
+  /// Enhanced Minimax with alpha-beta pruning and transposition table
   double _minimax(
     GameState state,
     int depth,
@@ -151,86 +214,237 @@ class ComputerAI {
     bool isMaximizing,
     Player aiPlayer,
   ) {
-    // Terminal conditions
+    // Check transposition table
+    final stateKey = _getStateKey(state, depth, isMaximizing);
+    if (_transpositionTable.containsKey(stateKey)) {
+      return _transpositionTable[stateKey]!;
+    }
+
+    // Terminal conditions - check game result
     if (state.result == GameResult.player1Wins) {
-      return aiPlayer == Player.player1 ? 1000 : -1000;
+      final score = aiPlayer == Player.player1 ? 10000.0 : -10000.0;
+      return score;
     }
     if (state.result == GameResult.player2Wins) {
-      return aiPlayer == Player.player2 ? 1000 : -1000;
+      final score = aiPlayer == Player.player2 ? 10000.0 : -10000.0;
+      return score;
     }
 
     final validMoves = state.getValidMoves();
     
-    // Check for trap condition
+    // Current player is trapped
     if (validMoves.isEmpty) {
-      // Current player is trapped, so the previous player wins
       final winner = state.currentPlayer.opponent;
-      return winner == aiPlayer ? 1000 : -1000;
+      final score = winner == aiPlayer ? 10000.0 : -10000.0;
+      return score;
     }
 
+    // Leaf node - evaluate
     if (depth == 0) {
-      return _evaluate(state, aiPlayer);
+      final score = _evaluate(state, aiPlayer);
+      _transpositionTable[stateKey] = score;
+      return score;
     }
 
+    // Order moves for better pruning (only at higher depths to save time)
+    final moves = depth >= 3 ? _orderMoves(state, validMoves) : validMoves;
+
+    double result;
     if (isMaximizing) {
       double maxEval = double.negativeInfinity;
-      for (final move in validMoves) {
+      for (final move in moves) {
         final newState = _simulateMove(state, move);
         final eval = _minimax(newState, depth - 1, alpha, beta, false, aiPlayer);
         maxEval = max(maxEval, eval);
         alpha = max(alpha, eval);
-        if (beta <= alpha) break; // Prune
+        if (beta <= alpha) break;
       }
-      return maxEval;
+      result = maxEval;
     } else {
       double minEval = double.infinity;
-      for (final move in validMoves) {
+      for (final move in moves) {
         final newState = _simulateMove(state, move);
         final eval = _minimax(newState, depth - 1, alpha, beta, true, aiPlayer);
         minEval = min(minEval, eval);
         beta = min(beta, eval);
-        if (beta <= alpha) break; // Prune
+        if (beta <= alpha) break;
       }
-      return minEval;
+      result = minEval;
     }
+
+    _transpositionTable[stateKey] = result;
+    return result;
   }
 
-  /// Evaluation function for non-terminal states
+  /// Generate unique key for transposition table
+  String _getStateKey(GameState state, int depth, bool isMaximizing) {
+    final boardKey = state.board.map((row) => 
+      row.map((t) => t.status.index.toString()).join()
+    ).join('|');
+    return '$boardKey:${state.player1Position}:${state.player2Position}:${state.currentPlayer.index}:$depth:$isMaximizing';
+  }
+
+  /// Enhanced evaluation function with multiple heuristics
   double _evaluate(GameState state, Player aiPlayer) {
     double score = 0;
+    
+    final aiPos = state.getPlayerPosition(aiPlayer);
+    final oppPos = state.getPlayerPosition(aiPlayer.opponent);
+    
+    // Calculate mobility for both players
+    final aiMobility = _countMobilityFromPosition(state, aiPos);
+    final oppMobility = _countMobilityFromPosition(state, oppPos);
 
-    // Mobility score
-    final currentMoves = state.getValidMoves().length;
-    final opponentState = state.copyWith(currentPlayer: state.currentPlayer.opponent);
-    final opponentMoves = opponentState.getValidMoves().length;
-
-    if (state.currentPlayer == aiPlayer) {
-      score += currentMoves * 10;
-      score -= opponentMoves * 10;
-    } else {
-      score += opponentMoves * 10;
-      score -= currentMoves * 10;
+    // === MOBILITY DIFFERENTIAL (most important) ===
+    // Having more moves than opponent is critical
+    score += (aiMobility - oppMobility) * 25;
+    
+    // === TRAP DETECTION ===
+    // Severely penalize having few moves (danger zone)
+    if (aiMobility == 0) {
+      score -= 5000; // We're trapped
+    } else if (aiMobility == 1) {
+      score -= 200; // Very dangerous
+    } else if (aiMobility == 2) {
+      score -= 50; // Risky
+    }
+    
+    // Reward reducing opponent to few moves
+    if (oppMobility == 0) {
+      score += 5000; // Opponent trapped
+    } else if (oppMobility == 1) {
+      score += 300; // Opponent in danger
+    } else if (oppMobility == 2) {
+      score += 100; // Opponent has limited options
     }
 
-    // Center control bonus (prefer positions closer to center)
-    final aiPos = state.getPlayerPosition(aiPlayer);
-    final center = state.gridSize / 2;
-    final distToCenter = (aiPos.row - center).abs() + (aiPos.col - center).abs();
-    score += (state.gridSize - distToCenter) * 2;
+    // === CAPTURE POTENTIAL ===
+    // Can we reach opponent? (Distance in knight moves)
+    final canReachOpponent = aiPos.getKnightMoves(state.gridSize).contains(oppPos);
+    if (canReachOpponent && _canCaptureAsPlayer(state, aiPlayer)) {
+      score += 500; // Capture threat
+    }
+    
+    // Can opponent reach us?
+    final canBeReached = oppPos.getKnightMoves(state.gridSize).contains(aiPos);
+    if (canBeReached) {
+      score -= 150; // We're in danger
+    }
+
+    // === BOARD CONTROL ===
+    // Count safe tiles we can access vs opponent
+    final aiAccessibleTiles = _countAccessibleTiles(state, aiPos, 2);
+    final oppAccessibleTiles = _countAccessibleTiles(state, oppPos, 2);
+    score += (aiAccessibleTiles - oppAccessibleTiles) * 5;
+
+    // === EDGE AVOIDANCE ===
+    // Penalize being on edges (fewer escape routes)
+    final edgePenalty = _getEdgePenalty(aiPos, state.gridSize);
+    score -= edgePenalty * 8;
+    
+    // Reward opponent being on edge
+    final oppEdgePenalty = _getEdgePenalty(oppPos, state.gridSize);
+    score += oppEdgePenalty * 5;
+
+    // === CENTER PROXIMITY (early game bonus) ===
+    if (state.moveCount < 10) {
+      final center = state.gridSize / 2.0;
+      final aiDistToCenter = (aiPos.row - center).abs() + (aiPos.col - center).abs();
+      final oppDistToCenter = (oppPos.row - center).abs() + (oppPos.col - center).abs();
+      score += (oppDistToCenter - aiDistToCenter) * 3;
+    }
 
     return score;
   }
 
-  /// Simulate a move and return the resulting state (simplified, no animations)
+  /// Count mobility from a specific position
+  int _countMobilityFromPosition(GameState state, Position pos) {
+    final potentialMoves = pos.getKnightMoves(state.gridSize);
+    return potentialMoves.where((p) {
+      if (!p.isOnBoard(state.gridSize)) return false;
+      if (!state.board[p.row][p.col].isPlayable) return false;
+      return true;
+    }).length;
+  }
+
+  /// Count our mobility after making a move
+  int _countMobilityAfterMove(GameState state, Position move) {
+    final simState = _simulateMove(state, move);
+    // Switch back to check our moves from new position
+    return _countMobilityFromPosition(
+      simState.copyWith(currentPlayer: state.currentPlayer),
+      move,
+    );
+  }
+
+  /// Count tiles accessible within N moves
+  int _countAccessibleTiles(GameState state, Position start, int depth) {
+    final visited = <String>{};
+    final queue = [MapEntry(start, 0)];
+    visited.add('${start.row},${start.col}');
+    
+    while (queue.isNotEmpty) {
+      final current = queue.removeAt(0);
+      if (current.value >= depth) continue;
+      
+      for (final next in current.key.getKnightMoves(state.gridSize)) {
+        final key = '${next.row},${next.col}';
+        if (!visited.contains(key) && 
+            next.isOnBoard(state.gridSize) &&
+            state.board[next.row][next.col].isPlayable) {
+          visited.add(key);
+          queue.add(MapEntry(next, current.value + 1));
+        }
+      }
+    }
+    
+    return visited.length;
+  }
+
+  /// Calculate edge penalty (0 for center, higher for edges/corners)
+  double _getEdgePenalty(Position pos, int gridSize) {
+    double penalty = 0;
+    
+    // Distance from edges
+    final distFromTop = pos.row;
+    final distFromBottom = gridSize - 1 - pos.row;
+    final distFromLeft = pos.col;
+    final distFromRight = gridSize - 1 - pos.col;
+    
+    // Penalize being close to edges
+    if (distFromTop == 0 || distFromBottom == 0) penalty += 2;
+    if (distFromLeft == 0 || distFromRight == 0) penalty += 2;
+    
+    // Extra penalty for corners
+    if ((distFromTop == 0 || distFromBottom == 0) && 
+        (distFromLeft == 0 || distFromRight == 0)) {
+      penalty += 3;
+    }
+    
+    return penalty;
+  }
+
+  /// Check if current player can capture (respects 4x4 first move rule)
+  bool _canCapture(GameState state) {
+    return !state.isPlayer2FirstMove;
+  }
+
+  /// Check if a specific player can capture
+  bool _canCaptureAsPlayer(GameState state, Player player) {
+    if (player == Player.player2 && state.moveCount == 1) {
+      return false; // 4x4 rule
+    }
+    return true;
+  }
+
+  /// Simulate a move and return the resulting state
   GameState _simulateMove(GameState state, Position target) {
     final currentPos = state.getPlayerPosition(state.currentPlayer);
     final opponentPos = state.getPlayerPosition(state.currentPlayer.opponent);
 
-    // Create new board with the origin tile set to void
     final newBoard = state.copyBoard();
     newBoard[currentPos.row][currentPos.col] = const TileState(status: TileStatus.void_);
 
-    // Update player position
     final Position newP1Pos;
     final Position newP2Pos;
 
@@ -242,15 +456,13 @@ class ComputerAI {
       newP2Pos = target;
     }
 
-    // Check for capture win
     GameResult result = GameResult.ongoing;
-    if (target == opponentPos) {
+    if (target == opponentPos && _canCapture(state)) {
       result = state.currentPlayer == Player.player1
           ? GameResult.player1Wins
           : GameResult.player2Wins;
     }
 
-    // Create new state with switched player
     final newState = state.copyWith(
       board: newBoard,
       player1Position: newP1Pos,
@@ -270,16 +482,6 @@ class ComputerAI {
     }
 
     return newState;
-  }
-
-  /// Count valid moves from a specific position (for mobility calculation)
-  int _countValidMovesFromPosition(GameState state, Position pos) {
-    final potentialMoves = pos.getKnightMoves(state.gridSize);
-    return potentialMoves.where((p) {
-      if (!p.isOnBoard(state.gridSize)) return false;
-      if (!state.board[p.row][p.col].isPlayable) return false;
-      return true;
-    }).length;
   }
 
   /// Pick the move with highest score
