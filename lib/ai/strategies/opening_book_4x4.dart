@@ -80,29 +80,49 @@ class OpeningBook4x4 {
     // ================================================================
     
     // Move 0: P1's opening (AI at 0,0, P2 at 3,3)
-    '00:33:1:0': [2, 1],  // Best opening - go to center
+    // STRATEGY CHANGE: Go to (1,2) instead of (2,1) to avoid later trap
+    '00:33:1:0': [1, 2],  // NEW: Go to (1,2) for different game tree
     
     // Move 2: P1's second move after P2 responds
-    // P1 is at (2,1), P2 at (1,2), (0,0) is void
-    // Knight from (2,1) can go to: (0,0)void, (0,2)✓, (1,3)✓, (3,3)✓, (4,0)off, (4,2)off, (3,-1)off, (0,0)void
-    // P2 at (1,2) is NOT reachable directly - we need to trap them
-    // BEST: Go to (0,2) - this limits P2's escape and controls the board
-    '21:12:1:2': [0, 2],  // CRITICAL: Go to (0,2) - best strategic position
-    '21:21:1:2': [0, 2],  // If P2 went to (2,1) - won't happen
-    '21:03:1:2': [0, 2],  // P2 at (0,3), control corner
-    '21:01:1:2': [0, 2],  // P2 at (0,1), control corner
+    // AI is now at (1,2), P2 moved from (3,3)
+    // From (1,2), AI can go to: (0,0)[void], (2,0), (3,1), (3,3)[void]
+    // P2 likely went to (2,1) (mirroring)
+    '12:21:1:2': [3, 1],  // Go to (3,1) - threatens and controls
+    '12:12:1:2': [3, 1],  // Won't happen - same position
+    '12:03:1:2': [2, 0],  // P2 at (0,3)
+    '12:01:1:2': [3, 1],  // P2 at (0,1)
+    '12:30:1:2': [2, 0],  // P2 at (3,0)
+    '12:32:1:2': [2, 0],  // P2 at (3,2)
+    
+    // OLD (2,1) opening as fallback - in case something else triggers it
+    '21:12:1:2': [0, 2],
+    '21:21:1:2': [0, 2],
+    '21:03:1:2': [0, 2],
+    '21:01:1:2': [0, 2],
     
     // Move 4: P1's third move
-    // AI is at (0,2), User is at (3,1) after their move
-    // From (0,2), AI can go to: (1,0), (2,1)[void], (2,3)
-    // CRITICAL: If we go to (1,0), user at (3,1) can CAPTURE us!
-    // Knight from (3,1) can reach: (1,0)✓, (1,2)[void], (2,3)
-    // So we must go to (2,3) instead!
-    '02:31:1:4': [2, 3],  // CRITICAL: Go to (2,3), NOT (1,0) - user can capture at (1,0)!
-    '02:30:1:4': [2, 3],  // Safe move
-    '02:03:1:4': [1, 0],  // P2 at (0,3) can't reach (1,0), so it's safe
-    '02:01:1:4': [2, 3],  // Safe
-    '13:31:1:4': [2, 2],  // If AI somehow at (1,3)
+    // AI at (3,1), P2 moved somewhere
+    // From (3,1), AI can go to: (1,0), (1,2)[void], (2,3)
+    '31:03:1:4': [1, 0],  // Safe positions
+    '31:10:1:4': [2, 3],  // Avoid capture
+    '31:20:1:4': [1, 0],
+    '31:22:1:4': [1, 0],
+    '31:30:1:4': [2, 3],
+    '31:32:1:4': [1, 0],
+    '31:23:1:4': [1, 0],
+    
+    // Alternative from (2,0) position
+    '20:03:1:4': [1, 2],
+    '20:10:1:4': [0, 1],
+    '20:30:1:4': [1, 2],
+    '20:32:1:4': [1, 2],
+    
+    // Old entries as fallback
+    '02:31:1:4': [2, 3],
+    '02:30:1:4': [2, 3],
+    '02:03:1:4': [1, 0],
+    '02:01:1:4': [2, 3],
+    '13:31:1:4': [2, 2],
     '01:31:1:4': [2, 2],
     '10:31:1:4': [2, 2],
     '13:03:1:4': [2, 2],
