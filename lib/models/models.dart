@@ -3,3 +3,4 @@ export 'position.dart';
 export 'tile_state.dart';
 export 'player.dart';
 export 'game_settings.dart';
+export 'difficulty.dart';
