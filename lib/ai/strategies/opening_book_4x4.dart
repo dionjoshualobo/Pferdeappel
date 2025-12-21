@@ -105,13 +105,26 @@ class OpeningBook4x4 {
     '13:03:1:4': [2, 2],  // If P2 escapes to corner
     '13:30:1:4': [2, 2],  // Continue
     
-    // Move 6: Later game positions
-    '01:10:1:6': [3, 0],  // Escape and threaten
-    '20:02:1:6': [1, 1],  // Center trap
-    '32:23:1:6': [1, 1],  // Close in
-    '10:21:1:6': [2, 2],
-    '10:03:1:6': [2, 1],
-    '10:32:1:6': [2, 1],
+    // Move 6: AI is at (1,0) after sequence (2,1)→(0,2)→(1,0)
+    // P2 (user) could be at various positions after their move 5
+    // From (1,0), AI knight can go to: (0,2)void, (2,2)✓, (3,1)✓
+    '10:02:1:6': [2, 2],  // P2 at (0,2) - that's void, won't happen
+    '10:03:1:6': [2, 2],  // P2 at (0,3)
+    '10:12:1:6': [3, 1],  // P2 at (1,2) - attack!
+    '10:13:1:6': [2, 2],  // P2 at (1,3)
+    '10:20:1:6': [2, 2],  // P2 at (2,0)
+    '10:21:1:6': [2, 2],  // P2 at (2,1) - that tile is void from move 0
+    '10:22:1:6': [3, 1],  // P2 at (2,2)
+    '10:23:1:6': [2, 2],  // P2 at (2,3)
+    '10:30:1:6': [2, 2],  // P2 at (3,0)
+    '10:31:1:6': [2, 2],  // P2 at (3,1) - user's likely position
+    '10:32:1:6': [2, 2],  // P2 at (3,2)
+    '10:33:1:6': [3, 1],  // P2 at (3,3) - capture!
+    
+    // Also add entries for other P1 positions at move 6
+    '01:10:1:6': [3, 0],
+    '20:02:1:6': [1, 1],
+    '32:23:1:6': [1, 1],
     '21:03:1:6': [0, 2],
     '02:21:1:6': [1, 0],
     '30:12:1:6': [1, 1],

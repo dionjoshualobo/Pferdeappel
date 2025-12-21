@@ -21,10 +21,14 @@ class ImpossibleStrategy with AIUtilities implements AIStrategy {
     
     // For 4x4 boards, use opening book for optimal play
     if (state.gridSize == 4) {
+      print('[IMPOSSIBLE] 4x4 detected, checking opening book...');
       final bookMove = _openingBook.getBookMove(state);
+      print('[IMPOSSIBLE] Book returned: $bookMove');
       if (bookMove != null && moves.contains(bookMove)) {
+        print('[IMPOSSIBLE] Using book move: $bookMove');
         return bookMove;
       }
+      print('[IMPOSSIBLE] Book move not used, falling through');
     }
     
     // Clear cache for fresh evaluation
