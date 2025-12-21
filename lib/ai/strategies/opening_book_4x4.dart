@@ -92,18 +92,21 @@ class OpeningBook4x4 {
     '21:03:1:2': [0, 2],  // P2 at (0,3), control corner
     '21:01:1:2': [0, 2],  // P2 at (0,1), control corner
     
-    // Move 4: P1's third move - based on user's sequence
-    // After: AI(2,1)→(1,3), User(1,2)→(3,1) - AI now at (1,3), User at (3,1)
-    // But we want AI to go to (3,3) capture at move 2, so this shouldn't happen
-    // If it does happen anyway:
-    '13:31:1:4': [2, 2],  // Cut off opponent mobility
-    '02:31:1:4': [1, 0],  // Pressure from other side
-    '02:30:1:4': [1, 0],  // Continue pressure
-    '02:03:1:4': [1, 0],  // Cut escape
-    '01:31:1:4': [2, 2],  // Block center
-    '10:31:1:4': [2, 2],  // Center control
-    '13:03:1:4': [2, 2],  // If P2 escapes to corner
-    '13:30:1:4': [2, 2],  // Continue
+    // Move 4: P1's third move
+    // AI is at (0,2), User is at (3,1) after their move
+    // From (0,2), AI can go to: (1,0), (2,1)[void], (2,3)
+    // CRITICAL: If we go to (1,0), user at (3,1) can CAPTURE us!
+    // Knight from (3,1) can reach: (1,0)✓, (1,2)[void], (2,3)
+    // So we must go to (2,3) instead!
+    '02:31:1:4': [2, 3],  // CRITICAL: Go to (2,3), NOT (1,0) - user can capture at (1,0)!
+    '02:30:1:4': [2, 3],  // Safe move
+    '02:03:1:4': [1, 0],  // P2 at (0,3) can't reach (1,0), so it's safe
+    '02:01:1:4': [2, 3],  // Safe
+    '13:31:1:4': [2, 2],  // If AI somehow at (1,3)
+    '01:31:1:4': [2, 2],
+    '10:31:1:4': [2, 2],
+    '13:03:1:4': [2, 2],
+    '13:30:1:4': [2, 2],
     
     // Move 6: AI is at (1,0) after sequence (2,1)→(0,2)→(1,0)
     // P2 (user) could be at various positions after their move 5
