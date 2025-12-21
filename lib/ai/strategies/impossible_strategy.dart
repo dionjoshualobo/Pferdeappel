@@ -1,11 +1,14 @@
 import 'dart:math' show max;
 import '../../models/models.dart';
 import 'ai_strategy.dart';
+import 'opening_book_4x4.dart';
 
 /// Impossible AI: Deep Minimax with iterative deepening
 /// This strategy uses maximum search depth and aggressive evaluation
+/// For 4x4 boards, uses pre-computed opening book for optimal play
 class ImpossibleStrategy with AIUtilities implements AIStrategy {
   final Map<String, _CacheEntry> _cache = {};
+  final OpeningBook4x4 _openingBook = OpeningBook4x4();
   
   @override
   String get name => 'Impossible';
@@ -15,6 +18,14 @@ class ImpossibleStrategy with AIUtilities implements AIStrategy {
     final moves = state.getValidMoves();
     if (moves.isEmpty) return null;
     if (moves.length == 1) return moves.first;
+    
+    // For 4x4 boards, use opening book for optimal play
+    if (state.gridSize == 4) {
+      final bookMove = _openingBook.getBookMove(state);
+      if (bookMove != null && moves.contains(bookMove)) {
+        return bookMove;
+      }
+    }
     
     // Clear cache for fresh evaluation
     _cache.clear();
