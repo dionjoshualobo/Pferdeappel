@@ -86,19 +86,20 @@ class OpeningBook4x4 {
     // Move 2: P1's second move after P2 responds
     // AI is now at (1,2), P2 moved from (3,3)
     // From (1,2), AI can go to: (0,0)[void], (2,0), (3,1), (3,3)[void]
-    // P2 likely went to (2,1) (mirroring)
-    '12:21:1:2': [3, 1],  // Go to (3,1) - threatens and controls
-    '12:12:1:2': [3, 1],  // Won't happen - same position
+    // PROBLEM: Going to (3,1) leads to capture trap at move 4
+    // SOLUTION: Go to (2,0) which is safer
+    '12:21:1:2': [2, 0],  // Go to (2,0) - safer position
+    '12:12:1:2': [2, 0],  // Won't happen - same position
     '12:03:1:2': [2, 0],  // P2 at (0,3)
-    '12:01:1:2': [3, 1],  // P2 at (0,1)
+    '12:01:1:2': [2, 0],  // P2 at (0,1)
     '12:30:1:2': [2, 0],  // P2 at (3,0)
     '12:32:1:2': [2, 0],  // P2 at (3,2)
     
-    // OLD (2,1) opening as fallback - in case something else triggers it
-    '21:12:1:2': [0, 2],
-    '21:21:1:2': [0, 2],
-    '21:03:1:2': [0, 2],
-    '21:01:1:2': [0, 2],
+    // OLD (2,1) opening as fallback
+    '21:12:1:2': [1, 3],  // Try (1,3) instead of (0,2)
+    '21:21:1:2': [1, 3],
+    '21:03:1:2': [1, 3],
+    '21:01:1:2': [1, 3],
     
     // Move 4: P1's third move
     // AI at (3,1), P2 moved somewhere
@@ -111,11 +112,21 @@ class OpeningBook4x4 {
     '31:32:1:4': [1, 0],
     '31:23:1:4': [1, 0],
     
-    // Alternative from (2,0) position
-    '20:03:1:4': [1, 2],
-    '20:10:1:4': [0, 1],
-    '20:30:1:4': [1, 2],
-    '20:32:1:4': [1, 2],
+    // Alternative from (2,0) position - THIS IS THE NEW MAIN PATH
+    // From (2,0), AI can go to: (0,1), (1,2)[void as AI was there], (3,2)
+    // Need to carefully avoid positions P2 can capture
+    '20:03:1:4': [0, 1],  // P2 at (0,3) - go to (0,1)
+    '20:10:1:4': [3, 2],  // P2 at (1,0) - avoid, go to (3,2)
+    '20:12:1:4': [0, 1],  // P2 at (1,2) - void, won't happen
+    '20:21:1:4': [0, 1],  // P2 at (2,1) - void from move 0, won't happen
+    '20:30:1:4': [0, 1],  // P2 at (3,0) - safe
+    '20:31:1:4': [0, 1],  // P2 at (3,1) - safe
+    '20:32:1:4': [0, 1],  // P2 at (3,2) - don't go there, go to (0,1)
+    '20:01:1:4': [3, 2],  // P2 at (0,1) - don't go there, go to (3,2)
+    '20:02:1:4': [0, 1],  // P2 at (0,2) 
+    '20:13:1:4': [0, 1],  // P2 at (1,3)
+    '20:22:1:4': [0, 1],  // P2 at (2,2)
+    '20:23:1:4': [0, 1],  // P2 at (2,3)
     
     // Old entries as fallback
     '02:31:1:4': [2, 3],
