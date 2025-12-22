@@ -151,12 +151,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Knight color selectors and play button
                     _buildPlaySection(),
                     
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 48), // Increased to give room for dropdown area
                     
                     // Grid size selector
                     _buildGridSizeSelector(),
                     
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32), // Increased spacing
                     
                     // How to Play button
                     _buildHowToPlayButton(),
@@ -330,54 +330,57 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        // Difficulty dropdown (only visible when computer is enabled)
-        if (isComputer) ...[
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: color.withValues(alpha: 0.5),
-              ),
-            ),
-            child: DropdownButton<Difficulty>(
-              value: difficulty,
-              items: _getAvailableDifficulties().map((d) {
-                return DropdownMenuItem(
-                  value: d,
-                  child: Text(
-                    d.displayName,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
+        // Difficulty dropdown - ALWAYS reserve space to prevent layout shift
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 32, // Fixed height for dropdown area
+          child: isComputer
+            ? Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: color.withValues(alpha: 0.5),
                   ),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    if (isPlayer1) {
-                      _player1Difficulty = value;
-                    } else {
-                      _player2Difficulty = value;
+                ),
+                child: DropdownButton<Difficulty>(
+                  value: difficulty,
+                  items: _getAvailableDifficulties().map((d) {
+                    return DropdownMenuItem(
+                      value: d,
+                      child: Text(
+                        d.displayName,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        if (isPlayer1) {
+                          _player1Difficulty = value;
+                        } else {
+                          _player2Difficulty = value;
+                        }
+                      });
                     }
-                  });
-                }
-              },
-              dropdownColor: const Color(0xFF2a2a3e),
-              underline: const SizedBox(),
-              isDense: true,
-              icon: Icon(
-                Icons.arrow_drop_down,
-                color: color,
-                size: 18,
-              ),
-            ),
-          ),
-        ],
+                  },
+                  dropdownColor: const Color(0xFF2a2a3e),
+                  underline: const SizedBox(),
+                  isDense: true,
+                  icon: Icon(
+                    Icons.arrow_drop_down,
+                    color: color,
+                    size: 18,
+                  ),
+                ),
+              )
+            : const SizedBox(), // Empty placeholder when not computer
+        ),
       ],
     );
   }
