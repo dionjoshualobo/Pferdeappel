@@ -19,7 +19,7 @@ class HardStrategy with AIUtilities implements AIStrategy {
     final win = findImmediateWin(state, moves);
     if (win != null) return win;
     
-    const depth = 5;
+    const depth = 4; // Reduced from 5 for faster performance
     final scores = <Position, double>{};
     final aiPlayer = state.currentPlayer;
     

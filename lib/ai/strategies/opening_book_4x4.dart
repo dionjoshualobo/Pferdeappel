@@ -24,24 +24,16 @@ class OpeningBook4x4 {
     
     // Try to find exact position in our solution table
     final key = _makeKey(p1, p2, isAiPlayer1, state.moveCount);
-    print('[4x4 BOOK] Key: $key, Looking up in table...');
     
     if (_solutionTable.containsKey(key)) {
       final target = _solutionTable[key]!;
       final move = Position(target[0], target[1]);
-      print('[4x4 BOOK] Found book move: $move, Valid moves: $moves');
       if (moves.contains(move)) {
-        print('[4x4 BOOK] Using book move: $move');
         return move;
-      } else {
-        print('[4x4 BOOK] Book move $move NOT in valid moves!');
       }
-    } else {
-      print('[4x4 BOOK] No book entry for key: $key');
     }
     
     // If not in exact table, use strategic analysis
-    print('[4x4 BOOK] Falling back to computed move');
     return _computeOptimalMove(state, moves);
   }
   

@@ -21,14 +21,10 @@ class ImpossibleStrategy with AIUtilities implements AIStrategy {
     
     // For 4x4 boards, use opening book for optimal play
     if (state.gridSize == 4) {
-      print('[IMPOSSIBLE] 4x4 detected, checking opening book...');
       final bookMove = _openingBook.getBookMove(state);
-      print('[IMPOSSIBLE] Book returned: $bookMove');
       if (bookMove != null && moves.contains(bookMove)) {
-        print('[IMPOSSIBLE] Using book move: $bookMove');
         return bookMove;
       }
-      print('[IMPOSSIBLE] Book move not used, falling through');
     }
     
     // Clear cache for fresh evaluation
@@ -87,47 +83,29 @@ class ImpossibleStrategy with AIUtilities implements AIStrategy {
   }
   
   /// Calculate search depth based on game state
+  /// OPTIMIZED: Reduced depths to prevent UI freezing
   int _calculateDepth(GameState state, int numMoves) {
     final gridSize = state.gridSize;
     
-    // Base depth depends on board size
+    // Base depth depends on board size - REDUCED for performance
     int base;
     if (gridSize <= 4) {
-      base = 15; // Very deep for small boards
+      base = 8; // 4x4 can handle deeper search
     } else if (gridSize <= 6) {
-      base = 10;
+      base = 6; // Medium boards
     } else {
-      base = 8;
+      base = 5; // Large boards need shallow search
     }
     
-    // Fewer moves = can search deeper
+    // Fewer moves = can search slightly deeper
     if (numMoves <= 2) {
-      base += 4;
-    } else if (numMoves <= 4) {
       base += 2;
-    } else if (numMoves >= 8) {
-      base -= 2;
+    } else if (numMoves >= 6) {
+      base -= 1; // Cap depth with many moves
     }
     
-    // Late game = search deeper
-    final playedTiles = _countVoidTiles(state);
-    if (playedTiles > gridSize * gridSize / 2) {
-      base += 2;
-    }
-    
-    return base;
-  }
-  
-  int _countVoidTiles(GameState state) {
-    int count = 0;
-    for (int r = 0; r < state.gridSize; r++) {
-      for (int c = 0; c < state.gridSize; c++) {
-        if (state.board[r][c].status == TileStatus.void_) {
-          count++;
-        }
-      }
-    }
-    return count;
+    // Cap maximum depth to prevent freeze
+    return base.clamp(4, 10);
   }
   
   /// Order moves by quick heuristic for better pruning
