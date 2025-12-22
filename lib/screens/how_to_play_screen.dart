@@ -63,9 +63,10 @@ class _HowToPlayScreenState extends State<HowToPlayScreen> {
     ),
     InstructionPage(
       title: 'Tie Game',
-      description: 'If only 2 tiles remain on the board (one under each player), the game ends in a TIE!\\n\\nNeither player can move or capture.',
+      description: 'If only 2 tiles remain on the board (one under each player), the game ends in a TIE!\n\nNeither player can move or capture.',
       icon: Icons.handshake,
       color: const Color(0xFF9E9E9E),
+      imagePath: 'assets/instructions/Tie.gif',
     ),
     InstructionPage(
       title: 'Customize Your Game',

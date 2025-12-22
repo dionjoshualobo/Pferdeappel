@@ -54,7 +54,37 @@ class GameState {
   factory GameState.initial(GameSettings settings) {
     final size = settings.gridSize;
     
-    // Initialize NxN board with all active tiles
+    // TEMPORARY TIE DEMO: Set to true to start with only 3 tiles for screenshotting
+    const tieDemoMode = false; // <-- DISABLED - normal gameplay restored
+    
+    if (tieDemoMode && size == 8) {
+      // Tie demo: Only 3 tiles remain - P1 at (0,0), empty at (1,2), P2 at (3,3)
+      // One move by P1 to (1,2) triggers tie!
+      final board = List.generate(
+        size,
+        (row) => List.generate(size, (col) {
+          // Only these 3 tiles are active: (0,0), (1,2), (3,3)
+          if ((row == 0 && col == 0) || 
+              (row == 1 && col == 2) || 
+              (row == 3 && col == 3)) {
+            return const TileState(); // Active
+          }
+          return const TileState(status: TileStatus.void_); // Void
+        }),
+      );
+      
+      return GameState(
+        board: board,
+        gridSize: size,
+        player1Position: const Position(0, 0),
+        player2Position: const Position(3, 3),
+        currentPlayer: Player.player1,
+        settings: settings,
+        moveCount: 0,
+      );
+    }
+    
+    // Normal mode: Initialize NxN board with all active tiles
     final board = List.generate(
       size,
       (_) => List.generate(size, (_) => const TileState()),

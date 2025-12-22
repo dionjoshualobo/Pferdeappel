@@ -110,20 +110,18 @@ class GameStateNotifier extends Notifier<GameState> {
     );
     
     GameResult result = GameResult.ongoing;
-    if (tempState.getValidMoves().isEmpty) {
+    
+    // Check for tie condition FIRST: only 2 tiles remain (one under each player)
+    final activeTiles = tempState.countActiveTiles();
+    if (activeTiles == 2) {
+      // Both players are standing on the only remaining tiles - it's a tie
+      // This takes priority over trap/capture
+      result = GameResult.tie;
+    } else if (tempState.getValidMoves().isEmpty) {
       // Next player is trapped - current player wins
       result = state.currentPlayer == Player.player1 
           ? GameResult.player1Wins 
           : GameResult.player2Wins;
-    }
-    
-    // Check for tie condition: only 2 tiles remain (one under each player)
-    if (result == GameResult.ongoing) {
-      final activeTiles = tempState.countActiveTiles();
-      if (activeTiles == 2) {
-        // Both players are standing on the only remaining tiles - it's a tie
-        result = GameResult.tie;
-      }
     }
 
     state = state.copyWith(
