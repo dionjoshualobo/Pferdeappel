@@ -116,6 +116,15 @@ class GameStateNotifier extends Notifier<GameState> {
           ? GameResult.player1Wins 
           : GameResult.player2Wins;
     }
+    
+    // Check for tie condition: only 2 tiles remain (one under each player)
+    if (result == GameResult.ongoing) {
+      final activeTiles = tempState.countActiveTiles();
+      if (activeTiles == 2) {
+        // Both players are standing on the only remaining tiles - it's a tie
+        result = GameResult.tie;
+      }
+    }
 
     state = state.copyWith(
       board: newBoard,
@@ -138,7 +147,7 @@ final isGameOverProvider = Provider<bool>((ref) {
   return gameState.result != GameResult.ongoing;
 });
 
-/// Provider for winner (null if game ongoing)
+/// Provider for winner (null if game ongoing or tie)
 final winnerProvider = Provider<Player?>((ref) {
   final gameState = ref.watch(gameStateProvider);
   switch (gameState.result) {
@@ -147,8 +156,15 @@ final winnerProvider = Provider<Player?>((ref) {
     case GameResult.player2Wins:
       return Player.player2;
     case GameResult.ongoing:
+    case GameResult.tie:
       return null;
   }
+});
+
+/// Provider to check if game is a tie
+final isTieProvider = Provider<bool>((ref) {
+  final gameState = ref.watch(gameStateProvider);
+  return gameState.result == GameResult.tie;
 });
 
 /// Provider to check if it's player 2's first move (capture not allowed)

@@ -8,6 +8,7 @@ enum GameResult {
   ongoing,
   player1Wins,
   player2Wins,
+  tie,
 }
 
 /// Complete game state
@@ -99,6 +100,19 @@ class GameState {
   /// Check if a position is a valid move for current player
   bool isValidMove(Position target) {
     return getValidMoves().contains(target);
+  }
+
+  /// Count the number of active (playable) tiles on the board
+  int countActiveTiles() {
+    int count = 0;
+    for (int row = 0; row < gridSize; row++) {
+      for (int col = 0; col < gridSize; col++) {
+        if (board[row][col].isPlayable) {
+          count++;
+        }
+      }
+    }
+    return count;
   }
 
   /// Get tile state at position

@@ -152,6 +152,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             // Win overlay
             if (isGameOver && winner != null)
               _WinOverlay(winner: winner, settings: gameState.settings),
+            
+            // Tie overlay
+            if (isGameOver && winner == null && ref.watch(isTieProvider))
+              const _TieOverlay(),
           ],
         ),
       ),
@@ -339,6 +343,147 @@ class _WinOverlay extends ConsumerWidget {
                         blurRadius: 20,
                       ),
                     ],
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Play Again button
+                GestureDetector(
+                  onTap: () => ref.read(gameStateProvider.notifier).resetGame(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          color,
+                          color.withValues(alpha: 0.7),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.5),
+                          blurRadius: 16,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.replay, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text(
+                          'Play Again',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Overlay shown when game ends in a tie
+class _TieOverlay extends ConsumerWidget {
+  const _TieOverlay();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    const color = Color(0xFF9E9E9E); // Gray for tie
+
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.7),
+        child: Center(
+          child: Container(
+            margin: const EdgeInsets.all(32),
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1a1a2e),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: color.withValues(alpha: 0.6),
+                width: 3,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.3),
+                  blurRadius: 30,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Tie icon
+                Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        color,
+                        color.withValues(alpha: 0.5),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.6),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.handshake,
+                    size: 35,
+                    color: Colors.white,
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Tie message
+                Text(
+                  "IT'S A TIE!",
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                    letterSpacing: 2,
+                    shadows: [
+                      Shadow(
+                        color: color.withValues(alpha: 0.8),
+                        blurRadius: 20,
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 8),
+                
+                Text(
+                  'Only 2 tiles remain!',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withValues(alpha: 0.7),
                   ),
                 ),
                 

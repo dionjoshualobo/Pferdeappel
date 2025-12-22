@@ -62,6 +62,12 @@ class _HowToPlayScreenState extends State<HowToPlayScreen> {
       imagePath: 'assets/instructions/4x4.gif',
     ),
     InstructionPage(
+      title: 'Tie Game',
+      description: 'If only 2 tiles remain on the board (one under each player), the game ends in a TIE!\\n\\nNeither player can move or capture.',
+      icon: Icons.handshake,
+      color: const Color(0xFF9E9E9E),
+    ),
+    InstructionPage(
       title: 'Customize Your Game',
       description: 'Tap the knights on the home screen to change colors.\n\nAdjust the grid size from 4×4 to 12×12.',
       icon: Icons.palette,
