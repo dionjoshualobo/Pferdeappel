@@ -389,6 +389,41 @@ class _WinOverlay extends ConsumerWidget {
                     ),
                   ),
                 ),
+                
+                const SizedBox(height: 16),
+                
+                // Home button
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.home, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text(
+                          'Home',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -520,6 +555,41 @@ class _TieOverlay extends ConsumerWidget {
                         SizedBox(width: 8),
                         Text(
                           'Play Again',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Home button
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.home, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text(
+                          'Home',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
