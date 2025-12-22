@@ -84,6 +84,29 @@ class _HomeScreenState extends State<HomeScreen> {
     widget.onStartGame(settings);
   }
 
+  /// Get available difficulty levels based on grid size
+  /// Impossible mode is disabled for 4x4 boards (mathematically unsolvable)
+  List<Difficulty> _getAvailableDifficulties() {
+    if (_gridSize == 4) {
+      // On 4x4, Impossible is disabled - P2 has forced win, P1 cannot avoid loss
+      return Difficulty.values.where((d) => d != Difficulty.impossible).toList();
+    }
+    return Difficulty.values.toList();
+  }
+
+  /// Ensure difficulty is valid for current grid size
+  void _validateDifficulties() {
+    if (_gridSize == 4) {
+      // Downgrade Impossible to Hard on 4x4
+      if (_player1Difficulty == Difficulty.impossible) {
+        _player1Difficulty = Difficulty.hard;
+      }
+      if (_player2Difficulty == Difficulty.impossible) {
+        _player2Difficulty = Difficulty.hard;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -321,7 +344,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: DropdownButton<Difficulty>(
               value: difficulty,
-              items: Difficulty.values.map((d) {
+              items: _getAvailableDifficulties().map((d) {
                 return DropdownMenuItem(
                   value: d,
                   child: Text(
@@ -470,6 +493,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (parsed != null) {
                         setState(() {
                           _gridSize = parsed.clamp(4, 12);
+                          _validateDifficulties(); // Auto-downgrade Impossible on 4x4
                         });
                       }
                     },
