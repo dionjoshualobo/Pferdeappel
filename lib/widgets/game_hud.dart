@@ -92,6 +92,10 @@ class GameHud extends ConsumerWidget {
           
           // Always show turn indicator (win overlay handled in game_screen)
           _buildTurnIndicator(gameState.currentPlayer, gameState.settings),
+          
+          // Show tiles remaining for Knight's Tour
+          if (gameState.settings.gameMode == GameMode.knightsTour)
+            _buildTilesRemaining(gameState),
         ],
       ),
     );
@@ -154,6 +158,36 @@ class GameHud extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTilesRemaining(GameState gameState) {
+    final tilesRemaining = gameState.countActiveTiles();
+    final totalTiles = gameState.gridSize * gameState.gridSize;
+    final tilesVisited = totalTiles - tilesRemaining;
+    final color = gameState.settings.player1Color;
+    
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: color.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          'Visited: $tilesVisited / $totalTiles',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: color.withValues(alpha: 0.9),
+          ),
+        ),
       ),
     );
   }
