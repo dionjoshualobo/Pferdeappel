@@ -117,17 +117,18 @@ class GameStateNotifier extends Notifier<GameState> {
       );
       
       final activeTiles = tempState.countActiveTiles();
-      final validMoves = tempState.getValidMoves();
-      
       GameResult result = GameResult.ongoing;
       
       // Win condition: only 1 tile left (the one player is standing on)
       if (activeTiles == 1) {
         result = GameResult.tourComplete;
-      } 
-      // Lose condition: no valid moves and more than 1 tile left
-      else if (validMoves.isEmpty) {
-        result = GameResult.tourFailed;
+      } else {
+        // Only check for valid moves if tour not complete
+        final validMoves = tempState.getValidMoves();
+        // Lose condition: no valid moves and more than 1 tile left
+        if (validMoves.isEmpty) {
+          result = GameResult.tourFailed;
+        }
       }
       
       state = state.copyWith(

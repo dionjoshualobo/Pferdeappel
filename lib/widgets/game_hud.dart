@@ -166,9 +166,10 @@ class GameHud extends ConsumerWidget {
     final tilesRemaining = gameState.countActiveTiles();
     final totalTiles = gameState.gridSize * gameState.gridSize;
     
-    // In Knight's Tour, the tile the knight is currently on counts as visited
-    // Calculate: tiles that have fallen away + 1 (current tile) = tiles visited
-    // But if knight hasn't been placed yet (moveCount == 0), show 0 visited
+    // In Knight's Tour, we count tiles that have fallen away plus the current tile
+    // Formula: (fallen tiles) + (current tile) = tiles visited
+    // Example: After 3 moves, 2 tiles have fallen, knight is on 3rd tile = 3 visited
+    // Special case: Before first move (moveCount == 0), show 0 visited
     final tilesVisited = gameState.moveCount == 0 
         ? 0 
         : totalTiles - tilesRemaining + 1;
