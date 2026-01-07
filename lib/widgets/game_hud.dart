@@ -165,7 +165,14 @@ class GameHud extends ConsumerWidget {
   Widget _buildTilesRemaining(GameState gameState) {
     final tilesRemaining = gameState.countActiveTiles();
     final totalTiles = gameState.gridSize * gameState.gridSize;
-    final tilesVisited = totalTiles - tilesRemaining;
+    
+    // In Knight's Tour, the tile the knight is currently on counts as visited
+    // Calculate: tiles that have fallen away + 1 (current tile) = tiles visited
+    // But if knight hasn't been placed yet (moveCount == 0), show 0 visited
+    final tilesVisited = gameState.moveCount == 0 
+        ? 0 
+        : totalTiles - tilesRemaining + 1;
+    
     final color = gameState.settings.player1Color;
     
     return Padding(
