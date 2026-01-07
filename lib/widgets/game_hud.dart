@@ -100,6 +100,10 @@ class GameHud extends ConsumerWidget {
   Widget _buildTurnIndicator(Player currentPlayer, GameSettings settings) {
     final color = currentPlayer.getColor(settings);
     
+    // For Knight's Tour, show different text
+    final isKnightsTour = settings.gameMode == GameMode.knightsTour;
+    final text = isKnightsTour ? "Knight's Tour" : "${currentPlayer.getDisplayName(settings)}'s Turn";
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
@@ -136,7 +140,7 @@ class GameHud extends ConsumerWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            "${currentPlayer.getDisplayName(settings)}'s Turn",
+            text,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,

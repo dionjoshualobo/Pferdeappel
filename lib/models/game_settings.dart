@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'difficulty.dart';
+import 'game_mode.dart';
 
 /// Game settings that can be configured from the home screen
 class GameSettings {
@@ -10,6 +11,7 @@ class GameSettings {
   final bool isPlayer2Computer;
   final Difficulty player1Difficulty;
   final Difficulty player2Difficulty;
+  final GameMode gameMode;
 
   const GameSettings({
     this.gridSize = 8,
@@ -19,6 +21,7 @@ class GameSettings {
     this.isPlayer2Computer = false,
     this.player1Difficulty = Difficulty.easy,
     this.player2Difficulty = Difficulty.easy,
+    this.gameMode = GameMode.vsPlayer,
   });
 
   /// Check if a specific player is computer
@@ -61,6 +64,7 @@ class GameSettings {
     bool? isPlayer2Computer,
     Difficulty? player1Difficulty,
     Difficulty? player2Difficulty,
+    GameMode? gameMode,
   }) {
     return GameSettings(
       gridSize: gridSize ?? this.gridSize,
@@ -70,6 +74,7 @@ class GameSettings {
       isPlayer2Computer: isPlayer2Computer ?? this.isPlayer2Computer,
       player1Difficulty: player1Difficulty ?? this.player1Difficulty,
       player2Difficulty: player2Difficulty ?? this.player2Difficulty,
+      gameMode: gameMode ?? this.gameMode,
     );
   }
 }

@@ -43,6 +43,16 @@ class GameStateNotifier extends Notifier<GameState> {
     final currentPos = state.getPlayerPosition(state.currentPlayer);
     final opponentPos = state.getPlayerPosition(state.currentPlayer.opponent);
     
+    // Handle Knight's Tour initial placement (position is -1, -1)
+    if (state.settings.gameMode == GameMode.knightsTour && currentPos.row == -1) {
+      // First move in Knight's Tour - just place the knight, don't remove any tile
+      state = state.copyWith(
+        player1Position: target,
+        moveCount: state.moveCount + 1,
+      );
+      return true;
+    }
+    
     // Create new board with the origin tile set to falling
     final newBoard = state.copyBoard();
     newBoard[currentPos.row][currentPos.col] = const TileState(status: TileStatus.falling);
@@ -59,9 +69,9 @@ class GameStateNotifier extends Notifier<GameState> {
       newP2Pos = target;
     }
 
-    // Check for capture win condition
+    // Check for capture win condition (not applicable in Knight's Tour)
     GameResult result = GameResult.ongoing;
-    if (target == opponentPos) {
+    if (state.settings.gameMode != GameMode.knightsTour && target == opponentPos) {
       result = state.currentPlayer == Player.player1 
           ? GameResult.player1Wins 
           : GameResult.player2Wins;
@@ -98,7 +108,37 @@ class GameStateNotifier extends Notifier<GameState> {
       return;
     }
 
-    // Switch to next player
+    // Handle Knight's Tour end conditions
+    if (state.settings.gameMode == GameMode.knightsTour) {
+      // Create temporary state to check next moves
+      final tempState = state.copyWith(
+        board: newBoard,
+        clearFallingTile: true,
+      );
+      
+      final activeTiles = tempState.countActiveTiles();
+      final validMoves = tempState.getValidMoves();
+      
+      GameResult result = GameResult.ongoing;
+      
+      // Win condition: only 1 tile left (the one player is standing on)
+      if (activeTiles == 1) {
+        result = GameResult.tourComplete;
+      } 
+      // Lose condition: no valid moves and more than 1 tile left
+      else if (validMoves.isEmpty) {
+        result = GameResult.tourFailed;
+      }
+      
+      state = state.copyWith(
+        board: newBoard,
+        result: result,
+        clearFallingTile: true,
+      );
+      return;
+    }
+
+    // Switch to next player (two-player mode)
     final nextPlayer = state.currentPlayer.opponent;
     
     // Check if next player has any valid moves (trap condition)
