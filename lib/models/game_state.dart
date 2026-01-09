@@ -2,6 +2,7 @@ import 'position.dart';
 import 'tile_state.dart';
 import 'player.dart';
 import 'game_settings.dart';
+import 'game_mode.dart';
 
 /// Represents the result of the game
 enum GameResult {

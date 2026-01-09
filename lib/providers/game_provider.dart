@@ -4,6 +4,7 @@ import '../models/position.dart';
 import '../models/tile_state.dart';
 import '../models/player.dart';
 import '../models/game_settings.dart';
+import '../models/game_mode.dart';
 import '../ai/computer_ai.dart';
 
 /// Provider for the game state - this is the main provider
@@ -196,7 +197,10 @@ final winnerProvider = Provider<Player?>((ref) {
       return Player.player2;
     case GameResult.ongoing:
     case GameResult.tie:
+    case GameResult.tourFailed:
       return null;
+    case GameResult.tourComplete:
+      return Player.player1; // Single-player success counts as a win
   }
 });
 
