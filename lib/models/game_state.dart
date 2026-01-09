@@ -2,6 +2,7 @@ import 'position.dart';
 import 'tile_state.dart';
 import 'player.dart';
 import 'game_settings.dart';
+import 'game_mode.dart';
 
 /// Represents the result of the game
 enum GameResult {
@@ -9,6 +10,10 @@ enum GameResult {
   player1Wins,
   player2Wins,
   tie,
+  /// Knight's Tour specific: player completed the tour successfully
+  tourComplete,
+  /// Knight's Tour specific: player failed (no moves left, tour incomplete)
+  tourFailed,
 }
 
 /// Complete game state
@@ -84,6 +89,25 @@ class GameState {
       );
     }
     
+    // Knight's Tour mode: Start with all tiles active, but player hasn't chosen position yet
+    // We use a special marker position (-1, -1) to indicate "not yet placed"
+    if (settings.gameMode == GameMode.knightsTour) {
+      final board = List.generate(
+        size,
+        (_) => List.generate(size, (_) => const TileState()),
+      );
+      
+      return GameState(
+        board: board,
+        gridSize: size,
+        player1Position: const Position(-1, -1), // Not yet placed
+        player2Position: const Position(-1, -1), // No player 2 in this mode
+        currentPlayer: Player.player1,
+        settings: settings,
+        moveCount: 0,
+      );
+    }
+    
     // Normal mode: Initialize NxN board with all active tiles
     final board = List.generate(
       size,
@@ -113,6 +137,20 @@ class GameState {
   /// Get all valid moves for the current player
   List<Position> getValidMoves() {
     final currentPos = getPlayerPosition(currentPlayer);
+    
+    // If in Knight's Tour mode and position hasn't been set yet, all tiles are valid
+    if (settings.gameMode == GameMode.knightsTour && currentPos.row == -1) {
+      List<Position> allPositions = [];
+      for (int row = 0; row < gridSize; row++) {
+        for (int col = 0; col < gridSize; col++) {
+          if (board[row][col].isPlayable) {
+            allPositions.add(Position(row, col));
+          }
+        }
+      }
+      return allPositions;
+    }
+    
     final opponentPos = getPlayerPosition(currentPlayer.opponent);
     final potentialMoves = currentPos.getKnightMoves(gridSize);
     

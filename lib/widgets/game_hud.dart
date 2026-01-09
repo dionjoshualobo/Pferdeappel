@@ -92,6 +92,10 @@ class GameHud extends ConsumerWidget {
           
           // Always show turn indicator (win overlay handled in game_screen)
           _buildTurnIndicator(gameState.currentPlayer, gameState.settings),
+          
+          // Show tiles remaining for Knight's Tour
+          if (gameState.settings.gameMode == GameMode.knightsTour)
+            _buildTilesRemaining(gameState),
         ],
       ),
     );
@@ -99,6 +103,10 @@ class GameHud extends ConsumerWidget {
 
   Widget _buildTurnIndicator(Player currentPlayer, GameSettings settings) {
     final color = currentPlayer.getColor(settings);
+    
+    // For Knight's Tour, show different text
+    final isKnightsTour = settings.gameMode == GameMode.knightsTour;
+    final text = isKnightsTour ? "Knight's Tour" : "${currentPlayer.getDisplayName(settings)}'s Turn";
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -136,7 +144,7 @@ class GameHud extends ConsumerWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            "${currentPlayer.getDisplayName(settings)}'s Turn",
+            text,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -150,6 +158,44 @@ class GameHud extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTilesRemaining(GameState gameState) {
+    final tilesRemaining = gameState.countActiveTiles();
+    final totalTiles = gameState.gridSize * gameState.gridSize;
+    
+    // In Knight's Tour, we count tiles that have fallen away plus the current tile
+    // Formula: (fallen tiles) + (current tile) = tiles visited
+    // Example: After 3 moves, 2 tiles have fallen, knight is on 3rd tile = 3 visited
+    // Special case: Before first move (moveCount == 0), show 0 visited
+    final tilesVisited = gameState.moveCount == 0 
+        ? 0 
+        : totalTiles - tilesRemaining + 1;
+    
+    final color = gameState.settings.player1Color;
+    
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: color.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          'Visited: $tilesVisited / $totalTiles',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: color.withValues(alpha: 0.9),
+          ),
+        ),
       ),
     );
   }
