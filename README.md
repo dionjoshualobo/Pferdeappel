@@ -57,12 +57,12 @@ When you move your knight, the tile you **leave behind falls into the abyss** an
 
 ## 📱 Which APK to Download?
 
-| APK Type | Best For | Size |
-|----------|----------|------|
-| **arm64-v8a** | Most modern phones (2016+) | ~17 MB |
-| **armeabi-v7a** | Older phones (pre-2016) | ~14 MB |
-| **x86_64** | Emulators, Chromebooks | ~18 MB |
-| **universal** | All devices (if unsure) | ~44 MB |
+| APK Type | Best For |
+|----------|----------|
+| **arm64-v8a** | Most modern phones (2016+) |
+| **armeabi-v7a** | Older phones (pre-2016) |
+| **x86_64** | Emulators, Chromebooks |
+| **universal** | All devices (if unsure) |
 
 ### How to check your phone's architecture:
 1. Go to **Settings → About Phone**
