@@ -1,0 +1,1 @@
+Two-player knight chase strategy on a shrinking board

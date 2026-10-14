@@ -1,0 +1,28 @@
+A turn-based chess knight strategy game for two players on a shrinking board.
+
+Compete against a friend to outmaneuver each other. Each knight moves in an
+L-shape, just like in chess. When you move, the tile you leave behind falls
+into the abyss and becomes void, so the board shrinks with every move!
+
+OBJECTIVE
+Capture your opponent's knight, or trap them so they have no valid moves.
+
+HOW TO PLAY
+Player 1 starts at the top-left corner, Player 2 at the bottom-right. Player 1
+always moves first. A knight moves 2 squares in one direction then 1 square
+perpendicular (an L-shape). You cannot land on void (fallen) tiles.
+
+WIN CONDITIONS
+1. Capture: land on your opponent's tile.
+2. Trap: leave your opponent with no valid moves.
+
+SPECIAL RULES
+On a 4x4 board, Player 2 cannot capture on their first move (this balances the
+smaller board). If only 2 tiles remain, one under each player, the game ends in
+a tie.
+
+FEATURES
+- Local two-player play on one device.
+- Board sizes from 4x4 to 12x12.
+- Choose your knight colors.
+- No ads, no tracking, and no internet permission required.
