@@ -238,9 +238,9 @@ class _HomeScreenState extends State<HomeScreen> {
         // Player label
         Text(
           player.displayName,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 12,
-            color: color,
+            color: Colors.white,
             fontWeight: FontWeight.w500,
           ),
         ),
