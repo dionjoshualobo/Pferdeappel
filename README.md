@@ -52,13 +52,6 @@ When you move your knight, the tile you **leave behind falls into the abyss** an
 
 ### Game Modes
 - **Player vs Player** - Play against a friend locally
-- **Player vs Computer** - Challenge the AI with 4 difficulty levels:
-  - 🟢 **Easy** - Random moves with basic trap avoidance
-  - 🟡 **Medium** - Heuristic evaluation with lookahead
-  - 🟠 **Hard** - Minimax algorithm with 4-ply depth
-  - 🔴 **Impossible** - Deep Negamax search (disabled on 4×4*)
-
-> *On 4×4 boards, "Impossible" is disabled because Player 2 has a mathematically forced win.
 
 ---
 
