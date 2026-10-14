@@ -91,11 +91,15 @@ class GameScreen extends ConsumerWidget {
             
             // Win overlay
             if (isGameOver && winner != null)
-              _WinOverlay(winner: winner, settings: gameState.settings),
+              _WinOverlay(
+                winner: winner,
+                settings: gameState.settings,
+                onHomePressed: onHomePressed,
+              ),
             
             // Tie overlay
             if (isGameOver && winner == null && ref.watch(isTieProvider))
-              const _TieOverlay(),
+              _TieOverlay(onHomePressed: onHomePressed),
           ],
         ),
       ),
@@ -208,8 +212,13 @@ class _FirstMoveOverlayState extends State<_FirstMoveOverlay>
 class _WinOverlay extends ConsumerWidget {
   final Player winner;
   final GameSettings settings;
+  final VoidCallback? onHomePressed;
 
-  const _WinOverlay({required this.winner, required this.settings});
+  const _WinOverlay({
+    required this.winner,
+    required this.settings,
+    this.onHomePressed,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -333,7 +342,7 @@ class _WinOverlay extends ConsumerWidget {
                 
                 // Home button
                 GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
+                  onTap: onHomePressed,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,
@@ -374,7 +383,9 @@ class _WinOverlay extends ConsumerWidget {
 
 /// Overlay shown when game ends in a tie
 class _TieOverlay extends ConsumerWidget {
-  const _TieOverlay();
+  final VoidCallback? onHomePressed;
+
+  const _TieOverlay({this.onHomePressed});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -509,7 +520,7 @@ class _TieOverlay extends ConsumerWidget {
                 
                 // Home button
                 GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
+                  onTap: onHomePressed,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,
