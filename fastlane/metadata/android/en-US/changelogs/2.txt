@@ -1,0 +1,1 @@
+Initial release. Two-player knight chase strategy game on a shrinking board.

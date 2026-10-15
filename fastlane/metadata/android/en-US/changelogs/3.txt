@@ -1,0 +1,1 @@
+Added Knight's Tour single-player mode. Play solo and navigate the board collecting all tiles without repeating moves.

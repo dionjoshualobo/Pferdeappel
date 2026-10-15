@@ -1,1 +1,1 @@
-Two-player knight chase strategy on a shrinking board
+Knight chess strategy game: single-player or two-player on a shrinking board
