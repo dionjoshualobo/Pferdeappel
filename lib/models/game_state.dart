@@ -2,6 +2,7 @@ import 'position.dart';
 import 'tile_state.dart';
 import 'player.dart';
 import 'game_settings.dart';
+import 'game_mode.dart';
 
 /// Represents the result of the game
 enum GameResult {
@@ -9,6 +10,10 @@ enum GameResult {
   player1Wins,
   player2Wins,
   tie,
+  /// Knight's Tour: player completed the tour successfully
+  tourComplete,
+  /// Knight's Tour: player failed (no moves left, tour incomplete)
+  tourFailed,
 }
 
 /// Complete game state
@@ -54,36 +59,25 @@ class GameState {
   factory GameState.initial(GameSettings settings) {
     final size = settings.gridSize;
     
-    // TEMPORARY TIE DEMO: Set to true to start with only 3 tiles for screenshotting
-    const tieDemoMode = false; // <-- DISABLED - normal gameplay restored
-    
-    if (tieDemoMode && size == 8) {
-      // Tie demo: Only 3 tiles remain - P1 at (0,0), empty at (1,2), P2 at (3,3)
-      // One move by P1 to (1,2) triggers tie!
+    // Knight's Tour mode: start with all tiles active, knight not yet placed.
+    // A sentinel position (-1, -1) marks "not yet placed".
+    if (settings.gameMode == GameMode.knightsTour) {
       final board = List.generate(
         size,
-        (row) => List.generate(size, (col) {
-          // Only these 3 tiles are active: (0,0), (1,2), (3,3)
-          if ((row == 0 && col == 0) || 
-              (row == 1 && col == 2) || 
-              (row == 3 && col == 3)) {
-            return const TileState(); // Active
-          }
-          return const TileState(status: TileStatus.void_); // Void
-        }),
+        (_) => List.generate(size, (_) => const TileState()),
       );
-      
+
       return GameState(
         board: board,
         gridSize: size,
-        player1Position: const Position(0, 0),
-        player2Position: const Position(3, 3),
+        player1Position: const Position(-1, -1),
+        player2Position: const Position(-1, -1),
         currentPlayer: Player.player1,
         settings: settings,
         moveCount: 0,
       );
     }
-    
+
     // Normal mode: Initialize NxN board with all active tiles
     final board = List.generate(
       size,
@@ -113,6 +107,20 @@ class GameState {
   /// Get all valid moves for the current player
   List<Position> getValidMoves() {
     final currentPos = getPlayerPosition(currentPlayer);
+
+    // Knight's Tour initial placement: every playable tile is a valid start
+    if (settings.gameMode == GameMode.knightsTour && currentPos.row == -1) {
+      final allPositions = <Position>[];
+      for (int row = 0; row < gridSize; row++) {
+        for (int col = 0; col < gridSize; col++) {
+          if (board[row][col].isPlayable) {
+            allPositions.add(Position(row, col));
+          }
+        }
+      }
+      return allPositions;
+    }
+
     final opponentPos = getPlayerPosition(currentPlayer.opponent);
     final potentialMoves = currentPos.getKnightMoves(gridSize);
     

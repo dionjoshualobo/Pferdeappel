@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'game_mode.dart';
 
 /// Game settings that can be configured from the home screen
 class GameSettings {
   final int gridSize;
   final Color player1Color;
   final Color player2Color;
+  final GameMode gameMode;
 
   const GameSettings({
     this.gridSize = 8,
     this.player1Color = const Color(0xFFFFD700), // Gold
     this.player2Color = const Color(0xFF9B59B6), // Purple,
+    this.gameMode = GameMode.vsPlayer,
   });
 
   /// Available colors for players to choose from
@@ -38,11 +41,13 @@ class GameSettings {
     int? gridSize,
     Color? player1Color,
     Color? player2Color,
+    GameMode? gameMode,
   }) {
     return GameSettings(
       gridSize: gridSize ?? this.gridSize,
       player1Color: player1Color ?? this.player1Color,
       player2Color: player2Color ?? this.player2Color,
+      gameMode: gameMode ?? this.gameMode,
     );
   }
 }

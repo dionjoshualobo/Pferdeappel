@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/models.dart';
 import '../providers/game_provider.dart';
 import '../widgets/widgets.dart';
+import 'knights_tour_overlays.dart';
 
 /// Main game screen with layered Stack architecture
 class GameScreen extends ConsumerWidget {
@@ -89,6 +90,12 @@ class GameScreen extends ConsumerWidget {
             if (isPlayer2FirstMove && isSmallBoard)
               const _FirstMoveOverlay(),
             
+            // Knight's Tour initial placement instruction overlay
+            if (gameState.settings.gameMode == GameMode.knightsTour &&
+                gameState.player1Position.row == -1 &&
+                !isGameOver)
+              const _KnightsTourStartOverlay(),
+            
             // Win overlay
             if (isGameOver && winner != null)
               _WinOverlay(
@@ -100,12 +107,95 @@ class GameScreen extends ConsumerWidget {
             // Tie overlay
             if (isGameOver && winner == null && ref.watch(isTieProvider))
               _TieOverlay(onHomePressed: onHomePressed),
+            
+            // Knight's Tour complete overlay
+            if (isGameOver && gameState.result == GameResult.tourComplete)
+              KnightsTourCompleteOverlay(
+                settings: gameState.settings,
+                onHomePressed: onHomePressed,
+              ),
+            
+            // Knight's Tour failed overlay
+            if (isGameOver && gameState.result == GameResult.tourFailed)
+              KnightsTourFailedOverlay(
+                settings: gameState.settings,
+                onHomePressed: onHomePressed,
+              ),
           ],
         ),
       ),
     );
   }
 }
+/// Overlay instruction for Knight's Tour initial placement
+class _KnightsTourStartOverlay extends StatelessWidget {
+  const _KnightsTourStartOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: 100,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: IgnorePointer(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.85),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFF6B4EFF).withValues(alpha: 0.6),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF6B4EFF).withValues(alpha: 0.3),
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '♞',
+                  style: TextStyle(
+                    fontSize: 32,
+                    color: Colors.white.withValues(alpha: 0.95),
+                    height: 1.0,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Tap any square to start',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Visit every square to win!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Overlay message that appears for player 2's first move and auto-dismisses
 class _FirstMoveOverlay extends StatefulWidget {
   const _FirstMoveOverlay();

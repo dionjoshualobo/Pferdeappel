@@ -4,6 +4,7 @@ import '../models/position.dart';
 import '../models/tile_state.dart';
 import '../models/player.dart';
 import '../models/game_settings.dart';
+import '../models/game_mode.dart';
 
 
 /// Provider for the game state - this is the main provider
@@ -43,6 +44,15 @@ class GameStateNotifier extends Notifier<GameState> {
     final currentPos = state.getPlayerPosition(state.currentPlayer);
     final opponentPos = state.getPlayerPosition(state.currentPlayer.opponent);
     
+    // Knight's Tour initial placement: place the knight without removing a tile
+    if (state.settings.gameMode == GameMode.knightsTour && currentPos.row == -1) {
+      state = state.copyWith(
+        player1Position: target,
+        moveCount: state.moveCount + 1,
+      );
+      return true;
+    }
+    
     // Create new board with the origin tile set to falling
     final newBoard = state.copyBoard();
     newBoard[currentPos.row][currentPos.col] = const TileState(status: TileStatus.falling);
@@ -59,9 +69,9 @@ class GameStateNotifier extends Notifier<GameState> {
       newP2Pos = target;
     }
 
-    // Check for capture win condition
+    // Check for capture win condition (not applicable in Knight's Tour)
     GameResult result = GameResult.ongoing;
-    if (target == opponentPos) {
+    if (state.settings.gameMode != GameMode.knightsTour && target == opponentPos) {
       result = state.currentPlayer == Player.player1 
           ? GameResult.player1Wins 
           : GameResult.player2Wins;
@@ -98,11 +108,36 @@ class GameStateNotifier extends Notifier<GameState> {
       return;
     }
 
-    // Switch to next player
+    // Knight's Tour end conditions (single player, no turn switching)
+    if (state.settings.gameMode == GameMode.knightsTour) {
+      final tempState = state.copyWith(
+        board: newBoard,
+        clearFallingTile: true,
+      );
+
+      final activeTiles = tempState.countActiveTiles();
+      GameResult result = GameResult.ongoing;
+
+      // Win: only the tile the knight stands on remains
+      if (activeTiles == 1) {
+        result = GameResult.tourComplete;
+      } else if (tempState.getValidMoves().isEmpty) {
+        // Lose: trapped with unvisited squares remaining
+        result = GameResult.tourFailed;
+      }
+
+      state = state.copyWith(
+        board: newBoard,
+        result: result,
+        clearFallingTile: true,
+      );
+      return;
+    }
+
+    // Switch to next player (two-player mode)
     final nextPlayer = state.currentPlayer.opponent;
-    
+
     // Check if next player has any valid moves (trap condition)
-    // We need to temporarily create the new state to check
     final tempState = state.copyWith(
       board: newBoard,
       currentPlayer: nextPlayer,
@@ -155,6 +190,8 @@ final winnerProvider = Provider<Player?>((ref) {
       return Player.player2;
     case GameResult.ongoing:
     case GameResult.tie:
+    case GameResult.tourComplete:
+    case GameResult.tourFailed:
       return null;
   }
 });

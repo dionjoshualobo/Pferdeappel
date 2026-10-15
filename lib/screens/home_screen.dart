@@ -68,6 +68,17 @@ class _HomeScreenState extends State<HomeScreen> {
       gridSize: _gridSize.clamp(4, 12), // Min 4x4, Max 12x12
       player1Color: _player1Color,
       player2Color: _player2Color,
+      gameMode: GameMode.vsPlayer,
+    );
+    widget.onStartGame(settings);
+  }
+
+  void _startKnightsTour() {
+    final settings = GameSettings(
+      gridSize: 8, // Knight's Tour is always 8x8
+      player1Color: _player1Color,
+      player2Color: _player2Color,
+      gameMode: GameMode.knightsTour,
     );
     widget.onStartGame(settings);
   }
@@ -125,6 +136,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     
                     // How to Play button
                     _buildHowToPlayButton(),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Knight's Tour button
+                    _buildKnightsTourButton(),
                   ],
                 ),
               ),
@@ -459,6 +475,59 @@ class _HomeScreenState extends State<HomeScreen> {
                 fontSize: 14,
                 color: Colors.white.withValues(alpha: 0.7),
                 fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKnightsTourButton() {
+    return GestureDetector(
+      onTap: _startKnightsTour,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF6B4EFF),
+              Color(0xFF9B59B6),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.2),
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6B4EFF).withValues(alpha: 0.3),
+              blurRadius: 15,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '♞',
+              style: TextStyle(
+                fontSize: 24,
+                color: Colors.white.withValues(alpha: 0.95),
+                height: 1.0,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              "Knight's Tour",
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white.withValues(alpha: 0.95),
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
