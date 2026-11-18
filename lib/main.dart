@@ -83,7 +83,14 @@ class _AppNavigatorState extends ConsumerState<AppNavigator> {
   @override
   Widget build(BuildContext context) {
     if (_isPlaying) {
-      return GameScreen(onHomePressed: _goHome);
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          _goHome();
+        },
+        child: GameScreen(onHomePressed: _goHome),
+      );
     } else {
       return HomeScreen(
         onStartGame: _startGame,
